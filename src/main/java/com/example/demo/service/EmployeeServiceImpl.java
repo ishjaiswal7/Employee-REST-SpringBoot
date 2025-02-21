@@ -6,6 +6,8 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.example.demo.exceptions.BadRequestException;
+import com.example.demo.exceptions.ResourceNotFoundException;
 import com.example.demo.model.Employee;
 import com.example.demo.repository.EmployeeRepository;
 
@@ -21,7 +23,15 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public Employee createEmployee(Employee employee) {
-        return employeeRepository.save(employee);
+        if (employee.getName() == null || employee.getName().isEmpty()) {
+        	throw new BadRequestException("Username cannot be empty");
+        }
+        
+        if (employee.getEmail() == null || !employee.getEmail().contains("@")) {
+        	throw new BadRequestException("Invalid email format");
+        }
+    	
+    	return employeeRepository.save(employee);
     }
 
     @Override
@@ -31,7 +41,13 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public Employee getEmployeeById(Long id) {
-        return employeeRepository.findById(id).orElse(null);
+    	Employee foundEmployee = employeeRepository.findById(id).orElse(null);
+        
+    	if(foundEmployee == null) {
+    		throw new ResourceNotFoundException(
+    				"Employee with id " +id+ " not found.");
+    	}
+    	return foundEmployee;
     }
 
     @Override
@@ -48,6 +64,12 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public void deleteEmployee(Long id) {
+    	Employee foundEmployee = employeeRepository.findById(id).orElse(null);
+        
+    	if(foundEmployee == null) {
+    		throw new ResourceNotFoundException(
+    				"Employee with id " +id+ " not found.");
+    	}    	
         employeeRepository.deleteById(id);
     }
 }
